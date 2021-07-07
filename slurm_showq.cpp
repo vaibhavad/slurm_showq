@@ -47,7 +47,7 @@
 void Slurm_Showq::query_running_jobs()
 {
   char *user, *starttime, *shorttime, *pendreason, *endtime, *submittime;
-  time_t current_time, remain_time;
+  time_t current_time, remain_time, queue_time;
   hostlist_t job_nodelist;
   char *host;
   char *token;
@@ -157,13 +157,13 @@ void Slurm_Showq::query_running_jobs()
        printf("ACTIVE JOBS--------------------\n");
       if(long_listing)
 	{
-	  printf("JOBID     JOBNAME    USERNAME      STATE   CORE   NODE QUEUE         REMAINING  STARTTIME\n");
-	  printf("===================================================================================================\n");
+	  printf("JOBID     JOBNAME                                            USERNAME       STATE   CORE   NODE QUEUE         REMAINING  STARTTIME\n");
+	  printf("============================================================================================================================================\n");
 	}
       else
 	{
-	  printf("JOBID     JOBNAME    USERNAME      STATE   CORE   REMAINING  STARTTIME\n");
-	  printf("================================================================================\n");
+	  printf("JOBID     JOBNAME                                            USERNAME       STATE   CORE   REMAINING  STARTTIME\n");
+	  printf("=========================================================================================================================\n");
 	}
       }
     
@@ -258,19 +258,19 @@ void Slurm_Showq::query_running_jobs()
 	  }
 
 	  if(NULL != job->name)
-		strncpy(jobname_short,job->name,10);
+		strncpy(jobname_short,job->name,50);
 	  else
-		strncpy(jobname_short,"(null)",10);
-	  jobname_short[10] = '\0';
+		strncpy(jobname_short,"(null)",50);
+	  jobname_short[50] = '\0';
 	  if(!summary_only)
 	    {
-	    printf("%-11s",jobname_short); 
+	    printf("%-51s",jobname_short); 
 	    }
 	  strncpy(jobuser_short,uid_to_string(job->user_id).c_str(),14);
 	  jobuser_short[14] = '\0';
 	  if(!summary_only)
 	    {
-	    printf("%-14s", jobuser_short);
+	    printf("%-15s", jobuser_short);
 
 	    printf("%-8s","Running");
 	    printf("%-6i ",job->num_cpus);;
@@ -416,13 +416,13 @@ void Slurm_Showq::query_running_jobs()
       printf("\nWAITING JOBS------------------------\n");
       if(long_listing)
 	{
-	  printf("JOBID     JOBNAME    USERNAME      STATE   CORE  HOST  QUEUE           WCLIMIT  QUEUETIME\n");
-	  printf("=======================================================================-===========================\n");
+	  printf("JOBID     JOBNAME                                            USERNAME       STATE   CORE  HOST  QUEUE           WCLIMIT  QUEUETIME         WAITIME\n");
+	  printf("===========================================================================================================================================\n");
 	}
       else
 	{
-	  printf("JOBID     JOBNAME    USERNAME      STATE   CORE     WCLIMIT  QUEUETIME\n");
-	  printf("================================================================================\n");
+	  printf("JOBID     JOBNAME                                            USERNAME       STATE   CORE     WCLIMIT  QUEUETIME            WAITIME\n");
+	  printf("==================================================================================================================================\n");
 	}
       }
     /* We are going to sort the jobs in order of priorty */
@@ -546,17 +546,17 @@ void Slurm_Showq::query_running_jobs()
 	  printf("%-10i", job->job_id);
 	   }
 	  if(NULL != job->name)
-		strncpy(jobname_short,job->name,10);
+		strncpy(jobname_short,job->name,50);
 	  else
-		strncpy(jobname_short,"(null)",10);
-	  jobname_short[10] = '\0';
+		strncpy(jobname_short,"(null)",50);
+	  jobname_short[50] = '\0';
           if(!summary_only)
 	    {
-	  printf("%-11s",jobname_short);
+	  printf("%-51s",jobname_short);
 
 	  strncpy(jobuser_short,uid_to_string(job->user_id).c_str(),14);
 	  jobuser_short[14] = '\0';
-	  printf("%-14s", jobuser_short);
+	  printf("%-15s", jobuser_short);
 
 	  printf("%-8s","Waiting");
 	  printf("%-6i ",job->num_cpus);
@@ -591,6 +591,25 @@ void Slurm_Showq::query_running_jobs()
 	  strncpy(shorttime,submittime,19);
 
 	  printf("%s",shorttime);
+
+	  current_time = time(NULL);
+	  queue_time  = (time_t)difftime(current_time, job->submit_time);
+	  secs_max     = queue_time;
+	  hours_remain = secs_max/3600;
+	  mins_remain  = (secs_max-hours_remain*3600)/60;
+	  secs_remain  = (secs_max - hours_remain*3600 - mins_remain*60);
+
+	  printf(" %2i:",hours_remain);
+	  if(mins_remain < 10)
+	    printf("0%1i:",mins_remain);
+	  else
+	    printf("%2i:",mins_remain);
+	  
+	  if(secs_remain < 10)
+	    printf("0%1i  ",secs_remain);
+	  else
+	    printf("%2i  ",secs_remain);
+
 	  printf("\n");
 	    }
 	  free(submittime);
@@ -1156,7 +1175,7 @@ Slurm_Showq::Slurm_Showq()
 
   show_blocked     = false;
   long_listing     = false;
-  user_jobs_only   = false;
+  user_jobs_only   = true;
   named_user_jobs_only = false;
   named_partition_jobs_only = false;
   show_all_reserv  = false;
