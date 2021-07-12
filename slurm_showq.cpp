@@ -163,8 +163,8 @@ void Slurm_Showq::query_running_jobs()
 			}
 			else
 			{
-				printf("JOBID     JOBNAME                                            USERNAME       STATE   CORE     ELAPSED    REMAINING  STARTTIME\n");
-				printf("======================================================================================================================================\n");
+				printf("JOBID     JOBNAME                                            USERNAME       STATE   CORE     ELAPSED    REMAINING  STARTTIME            NODES\n");
+				printf("===============================================================================================================================================\n");
 			}
 		}
 
