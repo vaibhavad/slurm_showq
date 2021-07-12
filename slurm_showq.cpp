@@ -46,7 +46,7 @@
 void Slurm_Showq::query_running_jobs()
 {
 	char *user, *starttime, *shorttime, *pendreason, *endtime, *submittime;
-	time_t current_time, remain_time, queue_time, start_time;
+	time_t current_time, remain_time, queue_time, start_time, elapsed_time;
 	hostlist_t job_nodelist;
 	char *host;
 	char *token;
@@ -163,8 +163,8 @@ void Slurm_Showq::query_running_jobs()
 			}
 			else
 			{
-				printf("JOBID     JOBNAME                                            USERNAME       STATE   CORE   REMAINING  STARTTIME\n");
-				printf("=========================================================================================================================\n");
+				printf("JOBID     JOBNAME                                            USERNAME       STATE   CORE     ELAPSED    REMAINING  STARTTIME\n");
+				printf("======================================================================================================================================\n");
 			}
 		}
 
@@ -194,10 +194,6 @@ void Slurm_Showq::query_running_jobs()
 				pending_jobs.push_back(i);
 				continue;
 			}
-
-			current_time = time(NULL);
-			secs_max = job->time_limit * 60; // max runtime (converted to secs)
-			remain_time = (time_t)difftime(secs_max + job->start_time, current_time);
 
 			// keep track of completing jobs - those which have exceeded
 			// their runlimit by a given threshold are flagged as
@@ -240,10 +236,6 @@ void Slurm_Showq::query_running_jobs()
 
 			starttime = strdup(ctime(&job->start_time));
 			starttime[strlen(starttime) - 1] = '\0';
-
-			hours_remain = remain_time / 3600;
-			mins_remain = (remain_time - hours_remain * 3600) / 60;
-			secs_remain = (remain_time - hours_remain * 3600 - mins_remain * 60);
 
 			if (hours_remain < 0 || mins_remain < 0 || secs_remain < 0)
 			{
@@ -292,6 +284,31 @@ void Slurm_Showq::query_running_jobs()
 			}
 			if (!summary_only)
 			{
+				current_time = time(NULL);
+				elapsed_time = (time_t)difftime(current_time, job->start_time);
+
+				hours_remain = elapsed_time / 3600;
+				mins_remain = (elapsed_time - hours_remain * 3600) / 60;
+				secs_remain = (elapsed_time - hours_remain * 3600 - mins_remain * 60);
+
+				printf(" %2i:", hours_remain);
+				if (mins_remain < 10)
+					printf("0%1i:", mins_remain);
+				else
+					printf("%2i:", mins_remain);
+
+				if (secs_remain < 10)
+					printf("0%1i  ", secs_remain);
+				else
+					printf("%2i  ", secs_remain);
+
+				current_time = time(NULL);
+				secs_max = job->time_limit * 60; // max runtime (converted to secs)
+				remain_time = (time_t)difftime(secs_max + job->start_time, current_time);
+				hours_remain = remain_time / 3600;
+				mins_remain = (remain_time - hours_remain * 3600) / 60;
+				secs_remain = (remain_time - hours_remain * 3600 - mins_remain * 60);
+
 				printf(" %2i:", hours_remain);
 				if (mins_remain < 10)
 					printf("0%1i:", mins_remain);
@@ -306,7 +323,8 @@ void Slurm_Showq::query_running_jobs()
 				shorttime = (char *)calloc(20, sizeof(char));
 				strncpy(shorttime, starttime, 19);
 				shorttime[19] = '\0';
-				printf("%s", shorttime);
+				printf("  %s", shorttime);
+				printf("  %s", job->nodes);
 
 				printf("\n");
 			}
