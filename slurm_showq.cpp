@@ -47,7 +47,7 @@
 void Slurm_Showq::query_running_jobs()
 {
   char *user, *starttime, *shorttime, *pendreason, *endtime, *submittime;
-  time_t current_time, remain_time, queue_time;
+  time_t current_time, remain_time, queue_time, start_time;
   hostlist_t job_nodelist;
   char *host;
   char *token;
@@ -421,8 +421,8 @@ void Slurm_Showq::query_running_jobs()
 	}
       else
 	{
-	  printf("JOBID     JOBNAME                                            USERNAME       STATE   CORE     WCLIMIT  QUEUETIME            WAITIME\n");
-	  printf("==================================================================================================================================\n");
+	  printf("JOBID     JOBNAME                                            USERNAME       STATE   CORE     WCLIMIT  QUEUETIME            STARTTIME             WAITIME\n");
+	  printf("========================================================================================================================================================\n");
 	}
       }
     /* We are going to sort the jobs in order of priorty */
@@ -590,7 +590,14 @@ void Slurm_Showq::query_running_jobs()
 	  shorttime = (char *)calloc(20,sizeof(char));
 	  strncpy(shorttime,submittime,19);
 
-	  printf("%s",shorttime);
+	  printf("%s  ",shorttime);
+
+	  starttime = strdup(ctime( &job->start_time));
+
+	  shorttime = (char *)calloc(20,sizeof(char));
+	  strncpy(shorttime,starttime,19);
+
+	  printf("%s ",shorttime);
 
 	  current_time = time(NULL);
 	  queue_time  = (time_t)difftime(current_time, job->submit_time);
